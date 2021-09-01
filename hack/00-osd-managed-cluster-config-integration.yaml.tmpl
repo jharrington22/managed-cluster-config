@@ -3564,6 +3564,11 @@ objects:
     clusterDeploymentSelector:
       matchLabels:
         api.openshift.com/managed: 'true'
+      matchExpressions:
+      - key: api.openshift.io/legal-entity-id
+        operator: NotIn
+        values:
+        - KUBLET_DYNAMIC_LEGALENTITY_IDS
     resourceApplyMode: Sync
     patches:
     - kind: MachineConfigPool
@@ -3593,6 +3598,66 @@ objects:
           systemReserved:
             cpu: 1000m
             memory: 1Gi
+- apiVersion: hive.openshift.io/v1
+  kind: SelectorSyncSet
+  metadata:
+    labels:
+      managed.openshift.io/gitHash: ${IMAGE_TAG}
+      managed.openshift.io/gitRepoName: ${REPO_NAME}
+      managed.openshift.io/osd: 'true'
+    name: kubelet-dynamic-config
+  spec:
+    clusterDeploymentSelector:
+      matchLabels:
+        api.openshift.com/managed: 'true'
+      matchExpressions:
+      - key: api.openshift.io/legal-entity-id
+        operator: In
+        values:
+        - KUBLET_DYNAMIC_LEGALENTITY_IDS
+      - key: hive.openshift.io/version-major-minor
+        operator: In
+        values:
+        - '4.8'
+        - '4.9'
+    resourceApplyMode: Sync
+    patches:
+    - kind: MachineConfigPool
+      apiVersion: machineconfiguration.openshift.io/v1
+      name: worker
+      applyMode: AlwaysApply
+      patch: '{ "metadata": {"labels": {"managed.openshift.io/custom-worker-kubelet":""}
+        } }'
+      patchType: merge
+    - kind: MachineConfigPool
+      apiVersion: machineconfiguration.openshift.io/v1
+      name: master
+      applyMode: AlwaysApply
+      patch: '{ "metadata": {"labels": {"managed.openshift.io/custom-kubelet":""}
+        } }'
+      patchType: merge
+    resources:
+    - apiVersion: machineconfiguration.openshift.io/v1
+      kind: KubeletConfig
+      metadata:
+        name: custom-kubelet
+      spec:
+        machineConfigPoolSelector:
+          matchLabels:
+            managed.openshift.io/custom-kubelet: ''
+        kubeletConfig:
+          systemReserved:
+            cpu: 1000m
+            memory: 1Gi
+    - apiVersion: machineconfiguration.openshift.io/v1
+      kind: KubeletConfig
+      metadata:
+        name: custom-worker-kubelet
+      spec:
+        autoSizingReserved: true
+        machineConfigPoolSelector:
+          matchLabels:
+            managed.openshift.io/custom-worker-kubelet: ''
 - apiVersion: hive.openshift.io/v1
   kind: SelectorSyncSet
   metadata:
