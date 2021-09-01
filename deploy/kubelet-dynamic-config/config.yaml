@@ -1,0 +1,9 @@
+deploymentMode: "SelectorSyncSet"
+selectorSyncSet:
+  matchExpressions:
+    - key: api.openshift.io/legal-entity-id
+      operator: In
+      values: ["KUBLET_DYNAMIC_LEGALENTITY_IDS"]
+    - key: hive.openshift.io/version-major-minor
+      operator: In
+      values: ["4.8", "4.9"]
